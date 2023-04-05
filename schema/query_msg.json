@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "get_state"
+      ],
+      "properties": {
+        "get_state": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_balance"
+      ],
+      "properties": {
+        "get_balance": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_round_price"
+      ],
+      "properties": {
+        "get_round_price": {
+          "type": "object",
+          "required": [
+            "height"
+          ],
+          "properties": {
+            "height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_latest_price"
+      ],
+      "properties": {
+        "get_latest_price": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_height_betting_list"
+      ],
+      "properties": {
+        "get_height_betting_list": {
+          "type": "object",
+          "required": [
+            "target_height"
+          ],
+          "properties": {
+            "target_height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

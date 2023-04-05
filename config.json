@@ -1,0 +1,70 @@
+{
+  "useTemplate": false,
+  "name": "amg-game",
+  "developer": {
+    "archwayd": {
+      "docker": false
+    },
+    "deployments": [
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 382,
+        "txhash": "E824B789F89E8E874EFFE1DE6CBD38F450F0F74960D316998A5751A392D80DB9",
+        "address": "archway184xhgwzg7q84h5qtvcnwx8yqxqvmp2e7977xqtddcpl2jhzx2sxsl9jkse",
+        "admin": "archway1wdydvakqzs4f5czdfxusxxdkjj99yykw0e0lf3"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 382,
+        "txhash": "20AD978055E9FDC0665276F3605F99170318A60619CC66E712A2A583C83237EE"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 381,
+        "txhash": "3F54CDA1EAB160A57F2CEFDC3D06B7244F84B348B222039C4B6245C4140BF33D"
+      }
+    ],
+    "scripts": {
+      "test": "cargo unit-test",
+      "build": "cargo build",
+      "optimize": "cargo run-script optimize",
+      "wasm": "cargo wasm",
+      "query": "archwayd query wasm",
+      "tx": "archwayd tx wasm execute"
+    }
+  },
+  "network": {
+    "name": "constantine",
+    "chainId": "constantine-2",
+    "type": "testnet",
+    "fees": {
+      "feeDenom": "uconst"
+    },
+    "gas": {
+      "prices": "0.002uconst",
+      "mode": "auto",
+      "adjustment": "1.5"
+    },
+    "wasm": {
+      "bech32Hrp": "archway",
+      "archwayd": "0.1.0",
+      "configDir": ".archway",
+      "binary": "archwayd"
+    },
+    "urls": {
+      "rpc": {
+        "url": "https://rpc.constantine-2.archway.tech",
+        "port": 443
+      },
+      "faucets": [
+        "https://faucet.constantine-2.archway.tech"
+      ]
+    }
+  }
+}

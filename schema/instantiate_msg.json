@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "denom",
+    "fee_late",
+    "lp_contract_address",
+    "minimum_amount",
+    "pool_contract_address",
+    "price"
+  ],
+  "properties": {
+    "denom": {
+      "type": "string"
+    },
+    "fee_late": {
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "lp_contract_address": {
+      "type": "string"
+    },
+    "minimum_amount": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "pool_contract_address": {
+      "type": "string"
+    },
+    "price": {
+      "type": "string"
+    }
+  }
+}

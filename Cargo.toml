@@ -1,0 +1,58 @@
+[package]
+name = "amg-game"
+version = "0.1.0"
+authors = ["gyu"]
+edition = "2018"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[package.metadata.scripts]
+optimize = """docker run --rm \
+  -e CARGO_TERM_COLOR=always \
+  -v "$(pwd)":/code
+  -v "$(basename "$(pwd)")_cache":/code/target \
+  -v "$(basename "$(pwd)")_registry_cache":/usr/local/cargo/registry \
+  -v "$(basename "$(pwd)")_cosmwasm_sccache":/root/.cache/sccache \
+  --name "$(basename "$(pwd)")" \
+  cosmwasm/rust-optimizer-arm64
+"""
+
+[dependencies]
+cosmwasm-std = "1.2.3"
+cosmwasm-storage = "1.2.3"
+cw-storage-plus = "1.0.1"
+cw2 = "1.0.1"
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = "1.0"
+cw20 = "1.0.1"
+cosmwasm-schema = "1.2.3"
+
+[dev-dependencies]
+cosmwasm-schema = "1.2.3"
