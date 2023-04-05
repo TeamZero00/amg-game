@@ -32,6 +32,7 @@ pub fn instantiate(
         fee_late: msg.fee_late,
         minimum_amount: Uint128::new(msg.minimum_amount as u128),
         pool_contract,
+        borrowed_balance: Uint128::new(0),
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -68,7 +69,7 @@ fn betting(
     position: String,
     duration: u64,
 ) -> Result<Response, ContractError> {
-    let state = load_state(deps.storage)?;
+    let mut state = load_state(deps.storage)?;
     check_denom(&info, &state)?;
     check_duration(duration)?;
     let now_height = env.block.height;
@@ -112,7 +113,8 @@ fn betting(
             }
         })?;
     }
-
+    state.borrowed_balance += betting_amount;
+    save_state(deps.storage, &state)?;
     let borrow_msg = AMGBankMsg::BorrowBalance {
         amount: betting_amount,
     };
@@ -149,7 +151,7 @@ fn setting(
     //
     let now_price = Decimal::from_str(price.as_str())?;
     // Load the contract state
-    let state = load_state(deps.storage)?;
+    let mut state = load_state(deps.storage)?;
 
     check_admin(&info, &state)?;
     let now_height = env.block.height;
@@ -166,46 +168,30 @@ fn setting(
         .load(deps.storage, now_height)
         .unwrap_or_else(|_| vec![]);
 
-    let attrs = vec![
-        ("method".to_string(), "setting".to_string()),
-        ("now_price".to_string(), price.clone()),
-    ];
-
     let mut return_balance = Uint128::new(0);
-
+    let mut borrowed_balance = Uint128::new(0);
     if !bettings.is_empty() {
         return_balance = betting_calculate(&bettings, &mut deps, now_price)?;
+        borrowed_balance = return_balance
+            .checked_div(Uint128::new(2))
+            .unwrap_or_default();
     }
 
+    state.borrowed_balance = state
+        .borrowed_balance
+        .checked_sub(borrowed_balance)
+        .unwrap_or_default();
+    save_state(deps.storage, &state)?;
     BETTINGS.remove(deps.storage, now_height);
 
-    let prize_attrs = bettings
-        .into_iter()
-        .map(|option| {
-            (
-                option.addr.to_string(),
-                option
-                    .amount
-                    .checked_mul(Uint128::new(2))
-                    .unwrap_or_else(|_| Uint128::MAX)
-                    .to_string(),
-            )
-        })
-        .collect::<Vec<(String, String)>>();
-    let response_attrs = attrs
-        .into_iter()
-        .chain(prize_attrs)
-        .collect::<Vec<(String, String)>>();
-
     let response = match return_balance.is_zero() {
-        true => Response::new().add_attributes(response_attrs),
-        false => Response::new()
-            .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: state.pool_contract.to_string(),
-                msg: to_binary(&AMGBankMsg::PayBack {})?,
-                funds: vec![coin(return_balance.u128(), "uconst")],
-            }))
-            .add_attributes(response_attrs),
+        true => Response::new(),
+        // .add_attributes(response_attrs),
+        false => Response::new().add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: state.pool_contract.to_string(),
+            msg: to_binary(&AMGBankMsg::PayBack {})?,
+            funds: vec![coin(return_balance.u128(), "uconst")],
+        })), // .add_attributes(response_attrs),
     };
 
     Ok(response)
@@ -300,8 +286,11 @@ fn query_state(deps: Deps) -> StdResult<State> {
 
 fn query_get_account_balance(deps: Deps, address: String) -> StdResult<u128> {
     let addr = deps.api.addr_validate(address.as_str())?;
-    let prize = BALANCE.load(deps.storage, &addr)?;
-    Ok(prize.u128())
+    let balance = BALANCE.load(deps.storage, &addr);
+    match balance {
+        Ok(balance) => Ok(balance.into()),
+        Err(_) => Ok(0),
+    }
 }
 
 fn query_get_round_price(deps: Deps, height: u64) -> StdResult<String> {
@@ -315,8 +304,11 @@ fn query_get_latest_price(deps: Deps, env: Env) -> StdResult<String> {
 }
 
 fn query_get_height_betting_list(deps: Deps, target_height: u64) -> StdResult<Vec<Betting>> {
-    let bettings = BETTINGS.load(deps.storage, target_height)?;
-    Ok(bettings)
+    let bettings = BETTINGS.load(deps.storage, target_height);
+    match bettings {
+        Ok(bettings) => Ok(bettings),
+        Err(_) => Ok(vec![]),
+    }
 }
 
 // // This test passes only if check_enough_pool(this function is 310) is excluded from the betting function.

@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "admin",
+    "borrowed_balance",
     "denom",
     "fee_late",
     "minimum_amount",
@@ -12,6 +13,9 @@
   "properties": {
     "admin": {
       "$ref": "#/definitions/Addr"
+    },
+    "borrowed_balance": {
+      "$ref": "#/definitions/Uint128"
     },
     "denom": {
       "type": "string"

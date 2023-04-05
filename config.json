@@ -8,6 +8,109 @@
     "deployments": [
       {
         "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 404,
+        "txhash": "E857EF6CB48CE7D28DA48BA33A5E37466DF317160D5067325493D9AAC8EE1292"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 395,
+        "txhash": "FFF2BAA78548D04D5BD1588D105AFE5357D03C370F90FC37120706F4DAC6932B",
+        "address": "archway13s5t80h0jf6fkx9q5nzh0cvwvcdsh54rxrcvjg09lrjk8eqxmaas38553e",
+        "admin": "archway17ppdxcezcu8rgzfvumralsk9x9hxj59x50wu5j"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 395,
+        "txhash": "64A342ED64BD8C2C440DB94CF43BEC4CF96C010FA7486EDB266640AD49EF7C4C"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 394,
+        "txhash": "1BBA4B07D6DD708D0043833C98A7C66FA6BCDB5B2D955014DEE6CD6EA2A43A98",
+        "address": "archway17e2hh6ue98kyzwdwljcu38nec696ea0g5zl6m76dnesqfsckca3sm4getm",
+        "admin": "archway17ppdxcezcu8rgzfvumralsk9x9hxj59x50wu5j"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 394,
+        "txhash": "55AAEA8802D6730EABF60AFAA8BDF95D4B28B6F7BAE69F2D6FD0147F02B2C0CB"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 392,
+        "txhash": "1C9323B77609FEDBCA5E0CDD4DA63FA9624BEEAA30C43C1ECCF31C2C43DDD093",
+        "address": "archway1kpndw43yf87mkfcf6spdwv4d7cuyd4n3d29hucmcaq5ttekge2eqm9g7s6",
+        "admin": "archway17ppdxcezcu8rgzfvumralsk9x9hxj59x50wu5j"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 392,
+        "txhash": "CB24407F5AA9ADA3A7B08429E2EFCA059E903C120CD90A3A9CB58A2692F55BE3"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 387,
+        "txhash": "98245865A684B471ECF17A980CBDCCEC8566F54236B6717B98EAFF29BB71002A",
+        "address": "archway1g4vz57c3p90nlnd6n6q9ufywq3emrxt6mmynvw4j0xhekmhzp2rqkf5zs8",
+        "admin": "archway1382j5acdluf577666xr74e9h66ksyhddyjm9am"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 387,
+        "txhash": "8BA8B7D8CAAD8794B1424782B0CBCBD67E853FFBE84E7E4001E4863C9AC8CDFC",
+        "address": "archway1c9uq5f9kkzeu0w74j3zawqrfvczhymqe49q3p2urjkam674m7uqseue6u2",
+        "admin": "archway1382j5acdluf577666xr74e9h66ksyhddyjm9am"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 387,
+        "txhash": "8E8F9331F85A54BB4E2ADD5F45A93D96EF7828409F0DDFB7E3CB04AE63DB062D"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 386,
+        "txhash": "32854B49472DA4B1E3060D5BE1474437E57DA6E65FD4F7A61888BD1E4C465E9E"
+      },
+      {
+        "project": "amg-game",
+        "type": "instantiate",
+        "chainId": "constantine-2",
+        "codeId": 385,
+        "txhash": "5C16B6D574497C6C23EFDC21E0DE00A1816CF567E36F065E1583C1F0CBD83C6B",
+        "address": "archway1e02mtg37jrtv89j72uytyyeerxq2rv0h54vz0f5jma9kgk8thepslt0jk4",
+        "admin": "archway1wdydvakqzs4f5czdfxusxxdkjj99yykw0e0lf3"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
+        "codeId": 385,
+        "txhash": "742B1EE47891A0034E563AFACA99B3DDEE8ABF61B0C442B55E719694EF179199"
+      },
+      {
+        "project": "amg-game",
         "type": "instantiate",
         "chainId": "constantine-2",
         "codeId": 382,

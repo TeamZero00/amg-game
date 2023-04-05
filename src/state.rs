@@ -13,6 +13,8 @@ pub struct State {
     pub denom: String,
     pub minimum_amount: Uint128,
     pub pool_contract: Addr,
+    pub borrowed_balance: Uint128,
+    // pub betting_height: Vec<u64>,
 }
 
 pub fn save_state(storage: &mut dyn Storage, state: &State) -> StdResult<()> {
