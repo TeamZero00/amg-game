@@ -3,13 +3,22 @@
   "title": "InstantiateMsg",
   "type": "object",
   "required": [
+    "bank_contract_address",
+    "betting_deadline_height",
     "denom",
     "fee_late",
     "minimum_amount",
-    "pool_contract_address",
     "price"
   ],
   "properties": {
+    "bank_contract_address": {
+      "type": "string"
+    },
+    "betting_deadline_height": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "denom": {
       "type": "string"
     },
@@ -22,9 +31,6 @@
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
-    },
-    "pool_contract_address": {
-      "type": "string"
     },
     "price": {
       "type": "string"

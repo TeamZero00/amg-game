@@ -31,18 +31,6 @@
     {
       "type": "object",
       "required": [
-        "claim"
-      ],
-      "properties": {
-        "claim": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "setting"
       ],
       "properties": {
@@ -111,6 +99,48 @@
       ],
       "properties": {
         "set_bank_contract": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_betting_deadline"
+      ],
+      "properties": {
+        "set_betting_deadline": {
+          "type": "object",
+          "required": [
+            "deadline_height"
+          ],
+          "properties": {
+            "deadline_height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "add_admin"
+      ],
+      "properties": {
+        "add_admin": {
           "type": "object",
           "required": [
             "address"

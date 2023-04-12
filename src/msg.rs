@@ -11,18 +11,20 @@ pub struct InstantiateMsg {
     // pub oracle_address: String, //솔루션 나오면 업데이트
     pub price: String,
     pub minimum_amount: u64,
-    pub pool_contract_address: String,
+    pub bank_contract_address: String,
+    pub betting_deadline_height: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Betting { position: String, duration: u64 },
-    Claim {},
-    Setting { price: String },
+    Setting { price: Uint128 },
     SetFeeLate { fee_late: u8 },
     SetMinimumAmount { amount: u64 },
     SetBankContract { address: String },
+    SetBettingDeadline { deadline_height: u64 },
+    AddAdmin { address: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,7 +35,8 @@ pub enum QueryMsg {
     GetRoundPrice { height: u64 },
     GetLatestPrice {},
     GetHeightBettingList { target_height: u64 },
-    // GetLPContract {},
+    GetisLock {}, // GetLPContract {},
+    GetRecentBettingList { target_height: u64 },
 }
 
 #[cw_serde]

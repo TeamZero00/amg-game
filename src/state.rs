@@ -8,13 +8,15 @@ use crate::ContractError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub admin: Addr,
+    pub admin: Vec<Addr>,
     pub fee_late: u8,
     pub denom: String,
     pub minimum_amount: Uint128,
-    pub pool_contract: Addr,
+    pub bank_contract: Addr,
     pub borrowed_balance: Uint128,
-    // pub betting_height: Vec<u64>,
+    pub latest_price: Uint128,
+    pub latest_height: u64,
+    pub betting_deadline_height: u64, // pub betting_height: Vec<u64>,
 }
 
 pub fn save_state(storage: &mut dyn Storage, state: &State) -> StdResult<()> {
@@ -46,24 +48,24 @@ impl Position {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Betting {
-    pub addr: Addr,
+    pub address: Addr,
     pub start_height: u64,
     pub target_height: u64,
     pub position: Position,
-    pub base_price: Decimal,
+    pub base_price: Uint128,
     pub amount: Uint128,
 }
 impl Betting {
     pub fn new(
-        addr: Addr,
+        address: Addr,
         position: Position,
         amount: Uint128,
-        base_price: Decimal,
+        base_price: Uint128,
         start_height: u64,
         target_height: u64,
     ) -> Self {
         Betting {
-            addr,
+            address,
             position,
             amount,
             base_price,
@@ -78,4 +80,4 @@ pub const STATE: Item<State> = Item::new("state");
 pub const BETTINGS: Map<u64, Vec<Betting>> = Map::new("bettings");
 
 pub const BALANCE: Map<&Addr, Uint128> = Map::new("balance");
-pub const PRICES: Map<u64, String> = Map::new("prices");
+pub const PRICES: Map<u64, Uint128> = Map::new("prices");

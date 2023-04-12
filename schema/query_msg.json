@@ -89,6 +89,40 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "getis_lock"
+      ],
+      "properties": {
+        "getis_lock": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_recent_betting_list"
+      ],
+      "properties": {
+        "get_recent_betting_list": {
+          "type": "object",
+          "required": [
+            "target_height"
+          ],
+          "properties": {
+            "target_height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }

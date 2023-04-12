@@ -4,15 +4,29 @@
   "type": "object",
   "required": [
     "admin",
+    "bank_contract",
+    "betting_deadline_height",
     "borrowed_balance",
     "denom",
     "fee_late",
-    "minimum_amount",
-    "pool_contract"
+    "latest_height",
+    "latest_price",
+    "minimum_amount"
   ],
   "properties": {
     "admin": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Addr"
+      }
+    },
+    "bank_contract": {
       "$ref": "#/definitions/Addr"
+    },
+    "betting_deadline_height": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
     },
     "borrowed_balance": {
       "$ref": "#/definitions/Uint128"
@@ -25,11 +39,16 @@
       "format": "uint8",
       "minimum": 0.0
     },
+    "latest_height": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "latest_price": {
+      "type": "string"
+    },
     "minimum_amount": {
       "$ref": "#/definitions/Uint128"
-    },
-    "pool_contract": {
-      "$ref": "#/definitions/Addr"
     }
   },
   "definitions": {
