@@ -35,7 +35,7 @@ pub fn instantiate(
         fee_late: msg.fee_late,
         minimum_amount: Uint128::new(msg.minimum_amount as u128),
         bank_contract,
-        borrowed_balance: Uint128::new(0),
+
         betting_deadline_height: msg.betting_deadline_height,
         latest_price: Uint128::new(0),
         latest_height: env.block.height,
@@ -70,15 +70,7 @@ pub fn execute(
         ExecuteMsg::AddAdmin { address } => add_admin(deps, info, address),
     }
 }
-fn add_admin(deps: DepsMut, info: MessageInfo, address: String) -> Result<Response, ContractError> {
-    let mut state = load_state(deps.storage)?;
-    check_admin(&info, &state)?;
-    let new_admin = deps.api.addr_validate(address.as_str())?;
-    state.admin.push(new_admin);
-    save_state(deps.storage, &state)?;
 
-    Ok(Response::new())
-}
 fn betting(
     deps: DepsMut,
     env: Env,
@@ -86,7 +78,7 @@ fn betting(
     position: String,
     duration: u64,
 ) -> Result<Response, ContractError> {
-    let mut state = load_state(deps.storage)?;
+    let state = load_state(deps.storage)?;
     check_denom(&info, &state)?;
     check_duration(duration)?;
     check_dead_line(&state, &env, duration)?;
@@ -98,18 +90,12 @@ fn betting(
         Err(_) => state.latest_price.clone(),
     };
 
-    let denom_amount = denom.amount;
-
     let target_height = now_height + duration;
+    let betting_amount = denom.amount;
 
     //3/100 = 0.03
     let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
-
-    //수수료 금액
-    let fee_amount: Uint128 = (fee_late * denom_amount).u128().into();
-
-    //수수료 공제 금액
-    let betting_amount = denom_amount - fee_amount;
+    let borrow_amount = (Decimal::one().checked_sub(fee_late)).unwrap() * betting_amount;
 
     //option 업데이트
     {
@@ -133,15 +119,12 @@ fn betting(
             }
         })?;
     }
-    state.borrowed_balance += betting_amount;
 
-    save_state(deps.storage, &state)?;
+    // save_state(deps.storage, &state)?;
 
     let borrow_msg = AMGBankMsg::BorrowBalance {
-        amount: betting_amount,
+        amount: borrow_amount,
     };
-
-    let fee_transfer_msg = AMGBankMsg::ProvideFee {};
 
     Ok(Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -149,12 +132,6 @@ fn betting(
             msg: to_binary(&borrow_msg)?,
             funds: vec![],
         }))
-        .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: state.bank_contract.to_string(),
-            msg: to_binary(&fee_transfer_msg)?,
-            funds: vec![coin(fee_amount.u128(), "uconst")],
-        }))
-        // .add_event()
         .add_attributes(vec![
             ("method", "betting".to_string()),
             ("position", position),
@@ -175,9 +152,6 @@ fn setting(
 ) -> Result<Response, ContractError> {
     //
     let mut state = load_state(deps.storage)?;
-    // let now_price = Decimal::from_str(price.as_str())?;
-
-    // Load the contract state
 
     check_admin(&info, &state)?;
     let now_height = env.block.height;
@@ -191,17 +165,19 @@ fn setting(
     //next round setting
     PRICES.save(deps.storage, now_height + 1, &price)?;
 
-    let bettings = BETTINGS
-        .load(deps.storage, now_height)
-        .unwrap_or_else(|_| vec![]);
-
     let mut return_balance = Uint128::new(0);
     let mut bank_msgs = vec![];
+
     let mut attrs = vec![("action".to_string(), "setting".to_string())];
-    if !bettings.is_empty() {
-        let round_price = PRICES.load(deps.storage, env.block.height);
-        match round_price {
-            Ok(round_price) => {
+    let round_price = PRICES.load(deps.storage, env.block.height);
+    match round_price {
+        Ok(round_price) => {
+            attrs.push(("round_price".to_string(), round_price.to_string()));
+            let bettings = BETTINGS
+                .load(deps.storage, now_height)
+                .unwrap_or_else(|_| vec![]);
+
+            if !bettings.is_empty() {
                 for betting in bettings {
                     let base_price = betting.base_price;
                     let win_position = match base_price.cmp(&round_price) {
@@ -209,66 +185,66 @@ fn setting(
                         Equal => Position::Eqaul,
                         Greater => Position::Short,
                     };
-                    let prize_amount = betting
-                        .amount
-                        .checked_mul(Uint128::new(2))
-                        .unwrap_or_else(|_| Uint128::MAX);
+                    let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
+                    let multiplier = Decimal::one() + Decimal::one().checked_sub(fee_late).unwrap();
+                    let prize_amount = betting.amount * multiplier;
 
                     if win_position != betting.position {
                         return_balance += prize_amount;
                         continue;
                     }
+
                     let bank_msg = CosmosMsg::Bank(BankMsg::Send {
                         to_address: betting.address.to_string(),
                         amount: vec![coin(prize_amount.u128(), "uconst")],
                     });
+
                     bank_msgs.push(bank_msg);
+
                     attrs.push((betting.address.to_string(), prize_amount.to_string()))
                 }
+
                 BETTINGS.remove(deps.storage, now_height);
             }
-            //Err 는 보낸 트랜잭션이 씹혔을 경우
-            Err(_) => {
-                //만약 5개를 처리하지 못했다면?
-                let sub = env.block.height - state.latest_height;
-
-                let mut before_bettings = vec![];
-                for i in 1..=sub {
-                    let before_betting = BETTINGS
-                        .load(deps.storage, env.block.height - i)
-                        .unwrap_or_else(|_| vec![]);
-                    before_bettings.push(before_betting)
-                }
-
-                match before_bettings.is_empty() {
-                    true => {}
-                    false => {
-                        //fee 도 다시 돌려줌
-                        let before_bettings = before_bettings
-                            .into_iter()
-                            .flatten()
-                            .collect::<Vec<Betting>>();
-                        for betting in before_bettings {
-                            //betting amount 는 수수료 포함 금액
-                            let send_amount = (betting.amount * Uint128::new(100))
-                                .checked_div(Uint128::new((100 - state.fee_late).into()))
-                                .unwrap();
-                            let bank_msg = CosmosMsg::Bank(BankMsg::Send {
-                                to_address: betting.address.to_string(),
-                                amount: vec![coin(send_amount.u128(), "uconst")],
-                            });
-                            let return_fee = send_amount - betting.amount;
-                            return_balance += betting.amount;
-                            return_balance -= return_fee;
-                            bank_msgs.push(bank_msg)
-                        }
-                        BETTINGS.remove(deps.storage, env.block.height - 1)
-                    }
-                };
-            }
         }
-    }
-    state.borrowed_balance -= return_balance;
+
+        Err(_) => {
+            //how many
+            let mut before_bettings = vec![];
+            for i in 1..=5 {
+                let before_betting = BETTINGS
+                    .load(deps.storage, env.block.height - i)
+                    .unwrap_or_else(|_| vec![]);
+                before_bettings.push(before_betting)
+            }
+
+            match before_bettings.is_empty() {
+                true => {}
+                false => {
+                    let before_bettings = before_bettings
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<Betting>>();
+                    for betting in before_bettings {
+                        //betting amount 는 수수료 포함 금액
+
+                        let bank_msg = CosmosMsg::Bank(BankMsg::Send {
+                            to_address: betting.address.to_string(),
+                            amount: vec![coin(betting.amount.u128(), "uconst")],
+                        });
+
+                        let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
+                        let borrowed_amount =
+                            (Decimal::one().checked_sub(fee_late)).unwrap() * betting.amount;
+                        return_balance += borrowed_amount;
+                        bank_msgs.push(bank_msg)
+                    }
+                    BETTINGS.remove(deps.storage, env.block.height - 1)
+                }
+            };
+        }
+    };
+
     state.latest_price = price;
     state.latest_height = env.block.height;
     save_state(deps.storage, &state)?;
@@ -276,7 +252,7 @@ fn setting(
         true => Response::new()
             .add_messages(bank_msgs)
             .add_attributes(attrs),
-        // .add_attributes(response_attrs),
+
         false => Response::new()
             .add_messages(bank_msgs)
             .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -284,12 +260,19 @@ fn setting(
                 msg: to_binary(&AMGBankMsg::PayBack {})?,
                 funds: vec![coin(return_balance.u128(), "uconst")],
             }))
-            .add_attributes(attrs), // .add_attributes(response_attrs),
+            .add_attributes(attrs),
     };
-
     Ok(response)
 }
+fn add_admin(deps: DepsMut, info: MessageInfo, address: String) -> Result<Response, ContractError> {
+    let mut state = load_state(deps.storage)?;
+    check_admin(&info, &state)?;
+    let new_admin = deps.api.addr_validate(address.as_str())?;
+    state.admin.push(new_admin);
+    save_state(deps.storage, &state)?;
 
+    Ok(Response::new())
+}
 fn set_deadline_height(deps: DepsMut, deadline_height: u64) -> Result<Response, ContractError> {
     STATE.update(deps.storage, |mut state| -> StdResult<_> {
         state.betting_deadline_height = deadline_height;

@@ -52,6 +52,5 @@ pub enum AMGBankMsg {
     Deposit {},
     Withdraw {},
     BorrowBalance { amount: Uint128 },
-    ProvideFee {},
     PayBack {},
 }
