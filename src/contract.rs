@@ -31,10 +31,7 @@ pub fn instantiate(
         fee_late: msg.fee_late,
         minimum_amount: Uint128::new(msg.minimum_amount as u128),
         bank_contract,
-
-        betting_deadline_height: msg.betting_deadline_height,
         latest_price: Uint128::new(0),
-
         lock: false,
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -58,6 +55,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Betting { position, duration } => betting(deps, env, info, position, duration),
         ExecuteMsg::Setting { price, lock } => setting(deps, env, info, price, lock),
+
         ExecuteMsg::SetFeeLate { fee_late } => set_fee_late(deps, env, info, fee_late),
         ExecuteMsg::SetMinimumAmount { amount } => set_minimum_amount(deps, env, info, amount),
         ExecuteMsg::SetBankContract { address } => set_bank_contract(deps, info, address),
@@ -76,7 +74,6 @@ fn betting(
     check_lock(&state)?;
     check_denom(&info, &state)?;
     check_duration(duration)?;
-    // check_dead_line(&state, &env, duration)?;
 
     let now_height = env.block.height;
     let denom = &info.funds[0];
@@ -93,11 +90,7 @@ fn betting(
     let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
     //borrow amount = 0.97 * betting_amount
     let borrow_amount = (Decimal::one().checked_sub(fee_late)).unwrap() * betting_amount;
-
     let win_amount = betting_amount + borrow_amount;
-
-    // let borrow_amount = betting_amount;
-    // let win_amount = betting_amount + borrow_amount - fee_amount;
     //option 업데이트
     {
         let position = Position::new(position.as_str())?;
@@ -157,12 +150,10 @@ fn setting(
     let mut state = load_state(deps.storage)?;
 
     check_admin(&info, &state)?;
-
     match lock {
         Some(lock) => state.lock = lock,
         None => {}
     }
-
     let now_height = env.block.height;
 
     // Save the new price
@@ -216,6 +207,7 @@ fn setting(
         }
 
         Err(_) => {
+            //how many
             let mut before_bettings = vec![];
             for i in 1..=5 {
                 let before_betting = BETTINGS
@@ -270,7 +262,6 @@ fn setting(
     };
     Ok(response)
 }
-
 fn add_admin(deps: DepsMut, info: MessageInfo, address: String) -> Result<Response, ContractError> {
     let mut state = load_state(deps.storage)?;
     check_admin(&info, &state)?;
@@ -325,7 +316,7 @@ fn set_bank_contract(
 // ######## TODO!!! Oracle version Setting
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetState {} => to_binary(&query_state(deps)?),
         QueryMsg::GetBalance { address } => to_binary(&query_get_account_balance(deps, address)?),
@@ -334,10 +325,10 @@ pub fn query(deps: Deps, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetHeightBettingList { target_height } => {
             to_binary(&query_get_height_betting_list(deps, target_height)?)
         }
+        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps)?),
         QueryMsg::GetRecentBettingList { target_height } => {
             to_binary(&query_get_recent_betting_list(deps, target_height)?)
         }
-        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps)?),
     }
 }
 
@@ -387,5 +378,8 @@ fn query_get_recent_betting_list(deps: Deps, target_height: u64) -> StdResult<Ve
 }
 fn query_state_lock(deps: Deps) -> StdResult<bool> {
     let state = load_state(deps.storage)?;
-    Ok(state.lock)
+    match state.lock {
+        true => Ok(true),
+        false => Ok(false),
+    }
 }

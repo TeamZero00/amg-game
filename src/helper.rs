@@ -13,14 +13,12 @@ pub fn check_admin(info: &MessageInfo, state: &State) -> Result<(), ContractErro
         false => Err(ContractError::OnlyOwner {}),
     }
 }
-
 pub fn check_lock(state: &State) -> Result<(), ContractError> {
     match state.lock {
         true => Err(ContractError::Lock {}),
         false => Ok(()),
     }
 }
-
 pub fn check_denom(info: &MessageInfo, state: &State) -> Result<(), ContractError> {
     //token check
     match info.funds.len() {
