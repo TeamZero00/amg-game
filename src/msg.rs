@@ -19,11 +19,11 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Betting { position: String, duration: u64 },
-    Setting { price: Uint128 },
+    Setting { price: Uint128, lock: Option<bool> },
     SetFeeLate { fee_late: u8 },
     SetMinimumAmount { amount: u64 },
     SetBankContract { address: String },
-    SetBettingDeadline { deadline_height: u64 },
+    // SetBettingDeadline { deadline_height: u64 },
     AddAdmin { address: String },
 }
 

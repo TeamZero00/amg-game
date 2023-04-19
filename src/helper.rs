@@ -14,6 +14,13 @@ pub fn check_admin(info: &MessageInfo, state: &State) -> Result<(), ContractErro
     }
 }
 
+pub fn check_lock(state: &State) -> Result<(), ContractError> {
+    match state.lock {
+        true => Err(ContractError::Lock {}),
+        false => Ok(()),
+    }
+}
+
 pub fn check_denom(info: &MessageInfo, state: &State) -> Result<(), ContractError> {
     //token check
     match info.funds.len() {
@@ -35,13 +42,13 @@ pub fn check_denom(info: &MessageInfo, state: &State) -> Result<(), ContractErro
     }
 }
 
-pub fn check_dead_line(state: &State, env: &Env, duration: u64) -> Result<(), ContractError> {
-    let target_height = env.block.height + duration;
-    match target_height.cmp(&state.betting_deadline_height) {
-        Less | Equal => Ok(()),
-        Greater => Err(ContractError::OverDeadline {}),
-    }
-}
+// pub fn check_dead_line(state: &State, env: &Env, duration: u64) -> Result<(), ContractError> {
+//     let target_height = env.block.height + duration;
+//     match target_height.cmp(&state.betting_deadline_height) {
+//         Less | Equal => Ok(()),
+//         Greater => Err(ContractError::OverDeadline {}),
+//     }
+// }
 
 //block_height + 1 = 6s
 pub fn check_duration(duration: u64) -> Result<(), ContractError> {

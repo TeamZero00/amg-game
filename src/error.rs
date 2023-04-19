@@ -45,6 +45,6 @@ pub enum ContractError {
     #[error("This is more than the current pool can handle.")]
     NotEnoughPool {},
 
-    #[error("You placed a bet over the lock height.")]
-    OverDeadline {},
+    #[error("Contract is Lock")]
+    Lock {},
 }

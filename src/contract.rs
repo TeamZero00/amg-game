@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::helper::{check_admin, check_dead_line, check_denom, check_duration};
+use crate::helper::{check_admin, check_denom, check_duration, check_lock};
 use crate::msg::{AMGBankMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::state::{
@@ -38,7 +38,8 @@ pub fn instantiate(
 
         betting_deadline_height: msg.betting_deadline_height,
         latest_price: Uint128::new(0),
-        latest_height: env.block.height,
+
+        lock: false,
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -60,10 +61,10 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Betting { position, duration } => betting(deps, env, info, position, duration),
-        ExecuteMsg::Setting { price } => setting(deps, env, info, price),
-        ExecuteMsg::SetBettingDeadline { deadline_height } => {
-            set_deadline_height(deps, deadline_height)
-        }
+        ExecuteMsg::Setting { price, lock } => setting(deps, env, info, price, lock),
+        // ExecuteMsg::SetBettingDeadline { deadline_height } => {
+        //     set_deadline_height(deps, deadline_height)
+        // }
         ExecuteMsg::SetFeeLate { fee_late } => set_fee_late(deps, env, info, fee_late),
         ExecuteMsg::SetMinimumAmount { amount } => set_minimum_amount(deps, env, info, amount),
         ExecuteMsg::SetBankContract { address } => set_bank_contract(deps, info, address),
@@ -79,9 +80,11 @@ fn betting(
     duration: u64,
 ) -> Result<Response, ContractError> {
     let state = load_state(deps.storage)?;
+    check_lock(&state)?;
     check_denom(&info, &state)?;
     check_duration(duration)?;
-    check_dead_line(&state, &env, duration)?;
+    // check_dead_line(&state, &env, duration)?;
+
     let now_height = env.block.height;
     let denom = &info.funds[0];
 
@@ -96,7 +99,7 @@ fn betting(
     //3/100 = 0.03
     let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
     let borrow_amount = (Decimal::one().checked_sub(fee_late)).unwrap() * betting_amount;
-
+    let win_amount = betting_amount + borrow_amount;
     //option 업데이트
     {
         let position = Position::new(position.as_str())?;
@@ -104,6 +107,7 @@ fn betting(
             info.sender.clone(),
             position,
             betting_amount,
+            win_amount,
             base_price,
             now_height,
             target_height,
@@ -149,11 +153,18 @@ fn setting(
     env: Env,
     info: MessageInfo,
     price: Uint128,
+    lock: Option<bool>,
 ) -> Result<Response, ContractError> {
     //
     let mut state = load_state(deps.storage)?;
 
     check_admin(&info, &state)?;
+
+    match lock {
+        Some(lock) => state.lock = lock,
+        None => {}
+    }
+
     let now_height = env.block.height;
 
     // Save the new price
@@ -185,23 +196,20 @@ fn setting(
                         Equal => Position::Eqaul,
                         Greater => Position::Short,
                     };
-                    let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
-                    let multiplier = Decimal::one() + Decimal::one().checked_sub(fee_late).unwrap();
-                    let prize_amount = betting.amount * multiplier;
 
                     if win_position != betting.position {
-                        return_balance += prize_amount;
+                        return_balance += betting.win_amount;
                         continue;
                     }
 
                     let bank_msg = CosmosMsg::Bank(BankMsg::Send {
                         to_address: betting.address.to_string(),
-                        amount: vec![coin(prize_amount.u128(), "uconst")],
+                        amount: vec![coin(betting.win_amount.u128(), "uconst")],
                     });
 
                     bank_msgs.push(bank_msg);
 
-                    attrs.push((betting.address.to_string(), prize_amount.to_string()))
+                    attrs.push((betting.address.to_string(), betting.win_amount.to_string()))
                 }
 
                 BETTINGS.remove(deps.storage, now_height);
@@ -209,7 +217,6 @@ fn setting(
         }
 
         Err(_) => {
-            //how many
             let mut before_bettings = vec![];
             for i in 1..=5 {
                 let before_betting = BETTINGS
@@ -246,7 +253,7 @@ fn setting(
     };
 
     state.latest_price = price;
-    state.latest_height = env.block.height;
+
     save_state(deps.storage, &state)?;
     let response = match return_balance.is_zero() {
         true => Response::new()
@@ -264,6 +271,7 @@ fn setting(
     };
     Ok(response)
 }
+
 fn add_admin(deps: DepsMut, info: MessageInfo, address: String) -> Result<Response, ContractError> {
     let mut state = load_state(deps.storage)?;
     check_admin(&info, &state)?;
@@ -325,7 +333,7 @@ fn set_bank_contract(
 // ######## TODO!!! Oracle version Setting
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetState {} => to_binary(&query_state(deps)?),
         QueryMsg::GetBalance { address } => to_binary(&query_get_account_balance(deps, address)?),
@@ -334,7 +342,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetHeightBettingList { target_height } => {
             to_binary(&query_get_height_betting_list(deps, target_height)?)
         }
-        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps, env)?),
+        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps)?),
         QueryMsg::GetRecentBettingList { target_height } => {
             to_binary(&query_get_recent_betting_list(deps, target_height)?)
         }
@@ -385,11 +393,7 @@ fn query_get_recent_betting_list(deps: Deps, target_height: u64) -> StdResult<Ve
     let bettings = bettings.into_iter().flatten().collect::<Vec<Betting>>();
     Ok(bettings)
 }
-fn query_state_lock(deps: Deps, env: Env) -> StdResult<bool> {
+fn query_state_lock(deps: Deps) -> StdResult<bool> {
     let state = load_state(deps.storage)?;
-    let query_now_height = env.block.height;
-    match state.betting_deadline_height.cmp(&query_now_height) {
-        Less | Equal => Ok(false),
-        Greater => Ok(true),
-    }
+    Ok(state.lock)
 }

@@ -14,8 +14,9 @@ pub struct State {
     pub minimum_amount: Uint128,
     pub bank_contract: Addr,
     pub latest_price: Uint128,
-    pub latest_height: u64,
-    pub betting_deadline_height: u64, // pub betting_height: Vec<u64>,
+    // pub latest_height: u64,
+    pub betting_deadline_height: u64,
+    pub lock: bool,
 }
 
 pub fn save_state(storage: &mut dyn Storage, state: &State) -> StdResult<()> {
@@ -53,12 +54,14 @@ pub struct Betting {
     pub position: Position,
     pub base_price: Uint128,
     pub amount: Uint128,
+    pub win_amount: Uint128,
 }
 impl Betting {
     pub fn new(
         address: Addr,
         position: Position,
         amount: Uint128,
+        win_amount: Uint128,
         base_price: Uint128,
         start_height: u64,
         target_height: u64,
@@ -67,6 +70,7 @@ impl Betting {
             address,
             position,
             amount,
+            win_amount,
             base_price,
             start_height,
             target_height,
