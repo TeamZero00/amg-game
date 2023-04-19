@@ -10,6 +10,13 @@
         "project": "amg-game",
         "type": "store",
         "chainId": "constantine-2",
+        "codeId": 569,
+        "txhash": "A53F9E0ADED876547F56AA4DA654C9E6B3499EF8FF935AB929078C8BE64C7B96"
+      },
+      {
+        "project": "amg-game",
+        "type": "store",
+        "chainId": "constantine-2",
         "codeId": 503,
         "txhash": "2EBAF69DE8E45DF4454C6BBA54246BBB44AB653D926D42132903D9FD18C03EF7"
       },

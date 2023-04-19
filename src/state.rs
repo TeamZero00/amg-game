@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, CanonicalAddr, Decimal, StdResult, Storage, Timestamp, Uint128};
+use cosmwasm_std::{Addr, StdResult, Storage, Uint128};
 use cw_storage_plus::{Item, Map};
 
 use crate::ContractError;
@@ -21,7 +21,6 @@ pub fn save_state(storage: &mut dyn Storage, state: &State) -> StdResult<()> {
     STATE.save(storage, state)
 }
 
-//State 스토리지 읽어오는 함수
 pub fn load_state(storage: &dyn Storage) -> StdResult<State> {
     STATE.load(storage)
 }

@@ -201,7 +201,6 @@ fn setting(
                     attrs.push((betting.address.to_string(), betting.win_amount.to_string()))
                 }
 
-                //delete
                 BETTINGS.remove(deps.storage, now_height);
             }
         }
@@ -231,9 +230,7 @@ fn setting(
                             amount: vec![coin(betting.amount.u128(), "uconst")],
                         });
 
-                        let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
-                        let borrowed_amount =
-                            (Decimal::one().checked_sub(fee_late)).unwrap() * betting.amount;
+                        let borrowed_amount = betting.win_amount - betting.amount;
                         return_balance += borrowed_amount;
                         bank_msgs.push(bank_msg)
                     }

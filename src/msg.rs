@@ -23,7 +23,6 @@ pub enum ExecuteMsg {
     SetFeeLate { fee_late: u8 },
     SetMinimumAmount { amount: u64 },
     SetBankContract { address: String },
-    // SetBettingDeadline { deadline_height: u64 },
     AddAdmin { address: String },
 }
 
@@ -35,7 +34,7 @@ pub enum QueryMsg {
     GetRoundPrice { height: u64 },
     GetLatestPrice {},
     GetHeightBettingList { target_height: u64 },
-    GetisLock {}, // GetLPContract {},
+    GetisLock {},
     GetRecentBettingList { target_height: u64 },
 }
 
