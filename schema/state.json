@@ -6,11 +6,10 @@
     "admin",
     "bank_contract",
     "betting_deadline_height",
-    "borrowed_balance",
     "denom",
     "fee_late",
-    "latest_height",
     "latest_price",
+    "lock",
     "minimum_amount"
   ],
   "properties": {
@@ -28,9 +27,6 @@
       "format": "uint64",
       "minimum": 0.0
     },
-    "borrowed_balance": {
-      "$ref": "#/definitions/Uint128"
-    },
     "denom": {
       "type": "string"
     },
@@ -39,13 +35,11 @@
       "format": "uint8",
       "minimum": 0.0
     },
-    "latest_height": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
     "latest_price": {
-      "type": "string"
+      "$ref": "#/definitions/Uint128"
+    },
+    "lock": {
+      "type": "boolean"
     },
     "minimum_amount": {
       "$ref": "#/definitions/Uint128"

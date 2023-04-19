@@ -2,9 +2,7 @@ use crate::error::ContractError;
 use crate::helper::{check_admin, check_denom, check_duration, check_lock};
 use crate::msg::{AMGBankMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 
-use crate::state::{
-    load_state, save_state, Betting, Position, State, BALANCE, BETTINGS, PRICES, STATE,
-};
+use crate::state::{load_state, save_state, Betting, Position, State, BALANCE, BETTINGS, PRICES};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -15,16 +13,14 @@ use std::cmp::Ordering::*;
 
 use cw2::set_contract_version;
 
-use std::str::FromStr;
-
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:fx-core";
+const CONTRACT_NAME: &str = "crates.io:fx-game";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
@@ -62,9 +58,6 @@ pub fn execute(
     match msg {
         ExecuteMsg::Betting { position, duration } => betting(deps, env, info, position, duration),
         ExecuteMsg::Setting { price, lock } => setting(deps, env, info, price, lock),
-        // ExecuteMsg::SetBettingDeadline { deadline_height } => {
-        //     set_deadline_height(deps, deadline_height)
-        // }
         ExecuteMsg::SetFeeLate { fee_late } => set_fee_late(deps, env, info, fee_late),
         ExecuteMsg::SetMinimumAmount { amount } => set_minimum_amount(deps, env, info, amount),
         ExecuteMsg::SetBankContract { address } => set_bank_contract(deps, info, address),
@@ -98,8 +91,13 @@ fn betting(
 
     //3/100 = 0.03
     let fee_late = Decimal::from_ratio(state.fee_late, Uint128::new(100));
+    //borrow amount = 0.97 * betting_amount
     let borrow_amount = (Decimal::one().checked_sub(fee_late)).unwrap() * betting_amount;
+
     let win_amount = betting_amount + borrow_amount;
+
+    // let borrow_amount = betting_amount;
+    // let win_amount = betting_amount + borrow_amount - fee_amount;
     //option 업데이트
     {
         let position = Position::new(position.as_str())?;
@@ -126,14 +124,14 @@ fn betting(
 
     // save_state(deps.storage, &state)?;
 
-    let borrow_msg = AMGBankMsg::BorrowBalance {
+    let msg = AMGBankMsg::BorrowBalance {
         amount: borrow_amount,
     };
 
     Ok(Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: state.bank_contract.to_string(),
-            msg: to_binary(&borrow_msg)?,
+            msg: to_binary(&msg)?,
             funds: vec![],
         }))
         .add_attributes(vec![
@@ -212,6 +210,7 @@ fn setting(
                     attrs.push((betting.address.to_string(), betting.win_amount.to_string()))
                 }
 
+                //delete
                 BETTINGS.remove(deps.storage, now_height);
             }
         }
@@ -281,13 +280,6 @@ fn add_admin(deps: DepsMut, info: MessageInfo, address: String) -> Result<Respon
 
     Ok(Response::new())
 }
-fn set_deadline_height(deps: DepsMut, deadline_height: u64) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> StdResult<_> {
-        state.betting_deadline_height = deadline_height;
-        Ok(state)
-    })?;
-    Ok(Response::new())
-}
 
 fn set_fee_late(
     deps: DepsMut,
@@ -342,10 +334,10 @@ pub fn query(deps: Deps, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetHeightBettingList { target_height } => {
             to_binary(&query_get_height_betting_list(deps, target_height)?)
         }
-        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps)?),
         QueryMsg::GetRecentBettingList { target_height } => {
             to_binary(&query_get_recent_betting_list(deps, target_height)?)
         }
+        QueryMsg::GetisLock {} => to_binary(&query_state_lock(deps)?),
     }
 }
 

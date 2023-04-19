@@ -14,7 +14,7 @@ pub struct State {
     pub minimum_amount: Uint128,
     pub bank_contract: Addr,
     pub latest_price: Uint128,
-    // pub latest_height: u64,
+
     pub betting_deadline_height: u64,
     pub lock: bool,
 }

@@ -1,8 +1,8 @@
 use crate::error::ContractError;
-use crate::state::{Betting, Position, State, BALANCE};
+use crate::state::State;
 
-use cosmwasm_std::{Decimal, DepsMut, Env, MessageInfo, StdResult, Uint128};
-use std::cmp::Ordering::*;
+use cosmwasm_std::MessageInfo;
+
 pub fn check_admin(info: &MessageInfo, state: &State) -> Result<(), ContractError> {
     // match state.admin == info.sender {
     //     true => Ok(()),
