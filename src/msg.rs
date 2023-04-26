@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Uint128};
+use cosmwasm_std::Uint128;
 use cw20::Expiration;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,6 @@ pub struct InstantiateMsg {
     pub price: String,
     pub minimum_amount: u64,
     pub bank_contract_address: String,
-    pub betting_deadline_height: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

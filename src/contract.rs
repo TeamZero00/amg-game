@@ -80,7 +80,7 @@ fn betting(
 
     let base_price = match PRICES.load(deps.storage, now_height) {
         Ok(price) => price,
-        Err(_) => state.latest_price.clone(),
+        Err(_) => state.latest_price,
     };
 
     let target_height = now_height + duration;
